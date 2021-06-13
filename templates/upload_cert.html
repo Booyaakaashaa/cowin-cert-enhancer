@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Upload Certificate</title>
+    <link rel="stylesheet" href="./static/styles/upload_cert.css">
+    <script src="https://kit.fontawesome.com/bef2622154.js" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container">
+    <form action="upload_pic" method="post" enctype="multipart/form-data">
+        <div class="drop_area">
+            <span class="loading"><i class="fas fa-yin-yang"></i></span>
+            <span class="icon"><i class="far fa-file-pdf"></i></span>
+            <div class="pdf_btn_container">
+                <input type="file" name="certificate" id="certificate" accept=".pdf" style="display:none">
+                <label class="pdf_btn" for="certificate">CHOOSE FILE</label>
+            </div>
+            <span class="or_span">OR</span>
+            <span class="drop_info"><p>Drop your  <b>Certificate</b>  here</p></span>
+        </div>
+    </form>
+</div>
+
+<script type="text/javascript" src="{{ url_for('static', filename = 'js/script_cert.js') }}"></script>
+</body>
+</html>
