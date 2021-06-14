@@ -6,7 +6,6 @@ from werkzeug.utils import secure_filename
 import cv2 as cv
 import fitz
 import copy
-import numpy as np
 
 UPLOAD_FOLDER = 'static/uploads/'
 DOWNLOAD_FOLDER = 'static/downloads/'
@@ -15,11 +14,11 @@ app = Flask(__name__)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
-session_code = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
 
 
 @app.route("/")
 def upload():
+    upload.session_code = session_code = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(6))
     return render_template("upload_cert.html")
 
 
@@ -28,6 +27,7 @@ def upload_pdf():
     if request.method == "POST":
         f = request.files.get("certificate")
         filename = secure_filename(f.filename)
+        session_code = upload.session_code
         filename = session_code + filename
         f.save(os.path.join(UPLOAD_FOLDER, filename))
         pdf_file = fitz.open(os.path.join(UPLOAD_FOLDER, filename))
@@ -35,8 +35,8 @@ def upload_pdf():
         zoom = 2.0
         mat = fitz.Matrix(zoom, zoom)
         pix = page.get_pixmap(matrix=mat)
-        img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
-        img = np.ascontiguousarray(img[..., [2, 1, 0]])  # rgb to bgr
+        pix.save(os.path.join(UPLOAD_FOLDER, session_code + '.png'))
+        img = cv.imread(os.path.join(UPLOAD_FOLDER, session_code + '.png'))
 
         img[1200:1396, 70:684] = [239, 236, 232]  # Remove PM Photo
 
@@ -59,8 +59,10 @@ def upload_pic():
     if request.method == "POST":
         f = request.files.get("pic")
         filename = secure_filename(f.filename)
+        session_code = upload.session_code
         filename = session_code + filename
         f.save(os.path.join(UPLOAD_FOLDER, filename))
+
         img3 = cv.imread(os.path.join(UPLOAD_FOLDER, filename))
 
         img3 = cv.cvtColor(img3, cv.COLOR_BGR2GRAY)
@@ -86,8 +88,8 @@ def upload_pic():
         page = img_pdf.new_page(width=shape.width, height=shape.height)
         page.show_pdf_page(shape, img_page, 0)
         img_pdf.save(os.path.join(DOWNLOAD_FOLDER, session_code + "cert_output.pdf"))
-        dir = os.path.join(DOWNLOAD_FOLDER, session_code + "cert_output.pdf")
-        return send_file(dir, download_name="certificate.pdf", as_attachment=True, mimetype='application/pdf')
+        location = os.path.join(DOWNLOAD_FOLDER, session_code + "cert_output.pdf")
+        return send_file(location, download_name="certificate.pdf", as_attachment=True, mimetype='application/pdf')
 
 
 if __name__ == "__main__":
