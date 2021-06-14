@@ -1,1 +1,1 @@
-web: gunicorn app:cowin-cert-enhancer
+web: gunicorn app:app
