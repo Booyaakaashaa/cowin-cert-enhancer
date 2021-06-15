@@ -8,6 +8,7 @@ const container = document.querySelector(".container"),
     form = container.querySelector("form"),
     button = container.querySelector(".pdf_btn_container"),
     btn = button.querySelector(".pdf_btn"),
+    label = container.querySelector("label"),
     input = container.querySelector("input"),
     dropInfo = dropArea.querySelector(".drop_info"),
     body = document.querySelector("body"),
@@ -18,8 +19,12 @@ const container = document.querySelector(".container"),
 let file;
 let ajaxData;
 
-container.onclick = () => {
+container.onclick = (e) => {
+    e.stopPropagation();
     input.click();
+}
+btn.onclick = (e) => {
+    e.stopPropagation();
 }
 
 dropArea.addEventListener("dragover", (e) => {

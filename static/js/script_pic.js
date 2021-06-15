@@ -18,8 +18,12 @@ const container = document.querySelector(".container"),
 let file;
 let ajaxData;
 
-container.onclick = () => {
+container.onclick = (e) => {
+    e.stopPropagation();
     input.click();
+}
+btn.onclick = (e) => {
+    e.stopPropagation();
 }
 
 dropArea.addEventListener("dragover", (e) => {
