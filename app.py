@@ -25,6 +25,7 @@ def upload():
 @app.route("/upload_pic", methods=["POST"])
 def upload_pdf():
     if request.method == "POST":
+        #uwsgi.lock()
         f = request.files.get("certificate")
         filename = secure_filename(f.filename)
         session_code = upload.session_code
@@ -92,5 +93,6 @@ def upload_pic():
         return send_file(location, download_name="certificate.pdf", as_attachment=True, mimetype='application/pdf')
 
 
-if __name__ == "__main__":
+"""if __name__ == "__main__":
     app.run(debug=True)
+"""
