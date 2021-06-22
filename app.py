@@ -1,6 +1,6 @@
 import io
 import os
-from flask import Flask, render_template, request, send_file, flash, redirect, url_for
+from flask import Flask, render_template, request, send_file, redirect, url_for
 from werkzeug.utils import secure_filename
 import cv2 as cv
 import fitz
