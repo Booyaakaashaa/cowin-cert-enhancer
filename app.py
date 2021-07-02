@@ -1,36 +1,38 @@
-import io
 import os
-from flask import Flask, render_template, request, send_file, redirect, url_for
+from flask import Flask, render_template, request, send_from_directory, redirect, url_for
 from werkzeug.utils import secure_filename
 import cv2 as cv
 import fitz
 import copy
-import numpy as np
+import secrets
+
+UPLOAD_FOLDER = 'static/uploads/'
+DOWNLOAD_FOLDER = 'static/downloads/'
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
+app.config['SECRET_KEY'] = secrets.token_urlsafe(16)
 
 
-@app.route("/")
-def upload():
-    return render_template("upload_cert.html")
-
-
-@app.route("/upload_pic", methods=["POST"])
+@app.route("/", methods=["POST", "GET"])
 def upload_pdf():
     if request.method == "POST":
         f = request.files.get("certificate")
         print(f)
         filename = secure_filename(f.filename)
         if filename.split(".")[-1] == "pdf":
-            print("1" + filename)
-            pdf_file = fitz.open(stream=f.read(), filetype="pdf")
+            print("1 " + filename)
+            filename = app.config["SECRET_KEY"] + filename
+            f.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
+            pdf_file = fitz.open(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             page = pdf_file[0]
             zoom = 2.0
             mat = fitz.Matrix(zoom, zoom)
             pix = page.get_pixmap(matrix=mat)
-            img = np.frombuffer(pix.samples, dtype=np.uint8).reshape(pix.h, pix.w, pix.n)
-            img = np.ascontiguousarray(img[..., [2, 1, 0]])  # rgb to bgr
+            pix.save(os.path.join(app.config["UPLOAD_FOLDER"], app.config["SECRET_KEY"] + '.png'))
+            img = cv.imread(os.path.join(app.config["UPLOAD_FOLDER"], app.config["SECRET_KEY"] + '.png'))
 
             img[1200:1396, 70:684] = [239, 236, 232]  # Remove PM Photo
 
@@ -43,21 +45,23 @@ def upload_pdf():
 
             output = copy.deepcopy(img)
             output[:, :] = (img[:, :] / 255) * (img2_resize[:, :] / 255) * 255  # print flag art on pdf
-            upload_pdf.out = output
+            cv.imwrite(os.path.join(app.config["UPLOAD_FOLDER"], app.config["SECRET_KEY"] + "int_output.png"), output)
+            return render_template('upload_pic.html')
+    return render_template("upload_cert.html")
 
-        return render_template('upload_pic.html')
 
-
-@app.route("/thank_you", methods=["POST"])
+@app.route("/upload_pic", methods=["POST", "GET"])
 def upload_pic():
     if request.method == "POST":
         f = request.files.get("pic")
         image_name = secure_filename(f.filename)
         print(f, image_name)
         if image_name.split(".")[-1] in ["jpg", "jpeg", "png", "JPG", "JPEG", "PNG"]:
-            img3 = f.read()
-            img3 = np.frombuffer(img3, np.uint8)
-            img3 = cv.imdecode(img3, cv.IMREAD_COLOR)
+            image_name = app.config["SECRET_KEY"] + image_name
+            f.save(os.path.join(app.config["UPLOAD_FOLDER"], image_name))
+
+            img3 = cv.imread(os.path.join(app.config["UPLOAD_FOLDER"], image_name))
+
             img3 = cv.cvtColor(img3, cv.COLOR_BGR2GRAY)
             img3 = cv.resize(img3, (272, 272), interpolation=cv.INTER_AREA)  # read user image and resize
             img_inv = 255 - img3
@@ -65,30 +69,26 @@ def upload_pic():
             output3 = cv.divide(img3, 255 - img_blur, scale=256)
             output3 = cv.cvtColor(output3, cv.COLOR_GRAY2RGB)
 
-            output = upload_pdf.out
+            output = cv.imread(os.path.join(app.config["UPLOAD_FOLDER"], app.config["SECRET_KEY"] + "int_output.png"))
 
-            output[1124: 1396, 244: 516] = (output[1124: 1396, 244: 516] / 255) * (
-                    output3[:, :] / 255) * 255  # OVerlap user photo
+            output[1124: 1396, 244: 516] = (output[1124: 1396, 244: 516] / 255) * (output3[:, :] / 255) * 255  # Overlap user photo
 
             img4 = cv.resize(cv.imread('stamp.png'), (630, 600), interpolation=cv.INTER_AREA)
             output[950: 1550, 0: 630] = (output[950: 1550, 0: 630] / 255) * (img4[:, :] / 255) * 255
-
-            _, output_stream = cv.imencode('.png', output)
-            output_stream = output_stream.tobytes()
-
-            image = fitz.open("png", stream=output_stream)
+            cv.imwrite(os.path.join(app.config["DOWNLOAD_FOLDER"], app.config["SECRET_KEY"] + 'output.png'), output)
+            img_pdf = fitz.open()
+            image = fitz.open(os.path.join(app.config["DOWNLOAD_FOLDER"], app.config["SECRET_KEY"] + 'output.png'))
+            shape = image[0].rect
             pdf_bytes = image.convert_to_pdf()
             image.close()
-            upload_pic.out = pdf_bytes
-        return redirect(url_for("thank_you"))
+            img_page = fitz.open("pdf", pdf_bytes)
+            page = img_pdf.new_page(width=shape.width, height=shape.height)
+            page.show_pdf_page(shape, img_page, 0)
+            img_pdf.save(os.path.join(app.config["DOWNLOAD_FOLDER"], app.config["SECRET_KEY"] + "cert_output.pdf"))
+            return redirect(url_for("thank_you", output=app.config["SECRET_KEY"] + "cert_output.pdf"))
+    return render_template("upload_pic.html")
 
 
-@app.route("/bye")
-def thank_you():
-    if upload_pic.out:
-        pdf_bytes = upload_pic.out
-        return send_file(io.BytesIO(pdf_bytes), download_name="certificate.pdf", as_attachment=True, mimetype='application/pdf')
-
-
-"""if __name__ == "__main__":
-    app.run(debug=True)"""
+@app.route("/thank_you/<output>")
+def thank_you(output):
+    return send_from_directory(app.config["DOWNLOAD_FOLDER"], output, download_name="Certificate.pdf", as_attachment=True, mimetype='application/pdf')
