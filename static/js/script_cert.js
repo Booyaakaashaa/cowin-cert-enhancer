@@ -40,7 +40,9 @@ dropArea.addEventListener("dragover", (e) => {
 });
 
 ["dragleave", "dragend"].forEach(action => {
-    dropArea.addEventListener(action, () => {
+    dropArea.addEventListener(action, (e) => {
+        e.stopPropagation();
+        e.preventDefault();
         dropArea.classList.remove("drop_area--drag");
         container.classList.remove("container--drag");
         orSpan.classList.remove("or_span--drag");
@@ -80,10 +82,8 @@ dropArea.addEventListener("drop", (e) => {
         icon.classList.remove("icon--drag");
         icon.classList.remove("icon--drop");
     } else {
-        file = file[0];
         $(function(){
-
-            let $form = $("form");
+            const $form = $("form");
             ajaxData = new FormData();
             console.log(1,file);
             ajaxData.append($('input').attr('name'), file);
@@ -97,11 +97,10 @@ dropArea.addEventListener("drop", (e) => {
                 contentType: false,
                 processData: false,
                 success: function (data){
-                    $form.trigger('submit');
-                    console.log("Success");
+                $form.trigger('submit');
+                console.log("Success");
                 },
             });
-
         });
     }
 });
