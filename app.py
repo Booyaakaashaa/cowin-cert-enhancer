@@ -19,7 +19,7 @@ app.config['SECRET_KEY'] = 'OcQfUw4yBE6QzL5E43JkTw'
 
 @app.route("/")
 def index():
-    session["code"] = ''.join(secrets.choice(string.ascii_letters + string.digits) for i in range(6))
+    session["code"] = secrets.token_urlsafe(24)
     return redirect(url_for("upload_pdf", hi=session["code"]))
 
 
