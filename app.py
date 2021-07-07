@@ -101,6 +101,3 @@ def thank_you(output):
     return send_from_directory(app.config["DOWNLOAD_FOLDER"], output, download_name="Certificate.pdf", as_attachment=True, mimetype='application/pdf')
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
-
