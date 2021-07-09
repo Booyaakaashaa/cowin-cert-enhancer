@@ -133,7 +133,3 @@ def thank_you(output):
 @app.route("/download")
 def download_cert():
     return send_from_directory(app.config["DOWNLOAD_FOLDER"], session["code"] + "cert_output.pdf", download_name="Certificate.pdf", as_attachment=True, mimetype='application/pdf')
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
