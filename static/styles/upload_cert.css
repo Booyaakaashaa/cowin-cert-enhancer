@@ -292,6 +292,14 @@ body{
     border-color: #1DA851;
 }
 
+
+.resp-sharing-button--telegram {
+    background-color: #54A9EB;
+}
+
+.resp-sharing-button--telegram:hover {
+    background-color: #4B97D1;}
+
 .share{
     display: flex;
     flex-direction: row;
