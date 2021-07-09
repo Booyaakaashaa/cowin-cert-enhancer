@@ -40,7 +40,9 @@ dropArea.addEventListener("dragover", (e) => {
 });
 
 ["dragleave", "dragend"].forEach(action => {
-    dropArea.addEventListener(action, () => {
+    dropArea.addEventListener(action, (e) => {
+        e.stopPropagation();
+        e.preventDefault();
         dropArea.classList.remove("drop_area--drag");
         container.classList.remove("container--drag");
         orSpan.classList.remove("or_span--drag");
@@ -54,6 +56,7 @@ dropArea.addEventListener("dragover", (e) => {
 dropArea.addEventListener("drop", (e) => {
     e.stopPropagation();
     e.preventDefault();
+
     dropArea.classList.add("drop_area--drag");
     container.classList.add("container--drag");
     orSpan.classList.add("or_span--drag");
@@ -63,12 +66,8 @@ dropArea.addEventListener("drop", (e) => {
     loading.classList.remove("loading");
     loading.classList.add("loading--drop");
     button.classList.add("pdf_btn_container--drag");
-    /*reader.onload = ()=>{
 
-    };*/
     file = e.dataTransfer.files;
-    //let $form = $('form');
-    //$form.trigger('submit');
     console.log(file);
     if (file.length > 1 || file.length === 0) {
         alert("Multiple files selected!");
@@ -83,12 +82,8 @@ dropArea.addEventListener("drop", (e) => {
         icon.classList.remove("icon--drag");
         icon.classList.remove("icon--drop");
     } else {
-        file = file[0];
-        //console.log(file);
         $(function(){
-
-            let $form = $("form");
-            //$form.trigger('submit');
+            const $form = $("form");
             ajaxData = new FormData();
             console.log(1,file);
             ajaxData.append($('input').attr('name'), file);
@@ -98,15 +93,14 @@ dropArea.addEventListener("drop", (e) => {
                 url: $form.attr('action'),
                 type: $form.attr('method'),
                 data: ajaxData,
-                //dataType: 'json',
                 cache: false,
                 contentType: false,
                 processData: false,
                 success: function (data){
-                    console.log("Success");
+                $form.trigger('submit');
+                console.log("Success");
                 },
             });
-            //$form.trigger('submit');
         });
     }
 });
