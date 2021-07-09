@@ -15,7 +15,7 @@ app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 6 * 1000 * 1000
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = b'\xc8\xd3\xe1\x97\xd4Q x\xd6\xb1\x9bv=\x8e\xa6\x17M\xd0)\x9d&};\xf4'
 
 
 @app.errorhandler(RequestEntityTooLarge)
