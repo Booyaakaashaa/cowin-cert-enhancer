@@ -1,11 +1,11 @@
 import os
 from flask import Flask, render_template, request, send_from_directory, redirect, url_for, session
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import RequestEntityTooLarge
 import cv2 as cv
 import fitz
 import copy
 import secrets
-import string
 
 UPLOAD_FOLDER = 'static/uploads/'
 DOWNLOAD_FOLDER = 'static/downloads/'
@@ -14,13 +14,23 @@ app = Flask(__name__)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['DOWNLOAD_FOLDER'] = DOWNLOAD_FOLDER
-app.config['SECRET_KEY'] = 'OcQfUw4yBE6QzL5E43JkTw'
+app.config['MAX_CONTENT_LENGTH'] = 6 * 1000 * 1000
+app.config['SECRET_KEY'] = os.urandom(24)
+
+
+@app.errorhandler(RequestEntityTooLarge)
+def file_size(e):
+    return """
+    <p>File size too large!</p>
+    <p>Max. acceptable size is 5MB</p>
+    <a href="https://cowin-cert-enhancer.herokuapp.com/">Try again!</a>
+    """, 413
 
 
 @app.route("/")
 def index():
     session["code"] = secrets.token_urlsafe(24)
-    return redirect(url_for("upload_pdf", hi=session["code"]))
+    return redirect(url_for("upload_pdf", foobar=session["code"]))
 
 
 @app.route("/upload_pdf", methods=["POST", "GET"])
@@ -30,7 +40,6 @@ def upload_pdf():
         print(f)
         filename = secure_filename(f.filename)
         if filename.split(".")[-1] == "pdf":
-            print("1 " + filename)
             filename = session["code"] + filename
             f.save(os.path.join(app.config["UPLOAD_FOLDER"], filename))
             pdf_file = fitz.open(os.path.join(app.config["UPLOAD_FOLDER"], filename))
@@ -53,7 +62,10 @@ def upload_pdf():
             output = copy.deepcopy(img)
             output[:, :] = (img[:, :] / 255) * (img2_resize[:, :] / 255) * 255  # print flag art on pdf
             cv.imwrite(os.path.join(app.config["UPLOAD_FOLDER"], session["code"] + "int_output.png"), output)
-            return render_template('upload_pic.html')
+            return redirect(url_for('upload_pic', foobar=session["code"]))
+        else:
+            return """<p>File extension not allowed!</p><br><p>Upload PDF Certificate</p><br>
+            <a id="retry" href="https://cowin-cert-enhancer.herokuapp.com/">Try again!</a>"""
     return render_template("upload_cert.html")
 
 
@@ -92,12 +104,18 @@ def upload_pic():
             page = img_pdf.new_page(width=shape.width, height=shape.height)
             page.show_pdf_page(shape, img_page, 0)
             img_pdf.save(os.path.join(app.config["DOWNLOAD_FOLDER"], session["code"] + "cert_output.pdf"))
-            return redirect(url_for("thank_you", output=session["code"] + "cert_output.pdf"))
+            return redirect(url_for("thank_you", output=session["code"]))
+        else:
+            return """<p>File extension not allowed!</p><p>Upload JPEG/JPG/PNG Selfie</p>
+            <a href="https://cowin-cert-enhancer.herokuapp.com/">Try again!</a>"""
     return render_template("upload_pic.html")
 
 
 @app.route("/thank_you/<output>")
 def thank_you(output):
-    return send_from_directory(app.config["DOWNLOAD_FOLDER"], output, download_name="Certificate.pdf", as_attachment=True, mimetype='application/pdf')
+    return render_template("thank_you.html", output=output + "output.png")
 
 
+@app.route("/download")
+def download_cert():
+    return send_from_directory(app.config["DOWNLOAD_FOLDER"], session["code"] + "cert_output.pdf", download_name="Certificate.pdf", as_attachment=True, mimetype='application/pdf')
