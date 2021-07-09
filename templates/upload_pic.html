@@ -4,25 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Upload Photo</title>
-    <link rel="stylesheet" href="./static/styles/upload_pic.css">
-    <script src="https://kit.fontawesome.com/bef2622154.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/static/styles/upload_cert.css">
 </head>
 <body>
-<div class="container">
-    <form action="thank_you" method="post" enctype="multipart/form-data">
-        <div class="drop_area">
-            <span class="loading"><i class="fas fa-yin-yang"></i></span>
-            <span class="icon"><i class="far fa-id-badge"></i></span>
-            <div class="pic_btn_container">
-                <input type="file" name="pic" id="pic" accept=".jpg" style="display:none">
-                <label class="pic_btn" for="pic">CHOOSE FILE</label>
-            </div>
-            <span class="or_span">OR</span>
-            <span class="drop_info"><p>Drop your  <b>Selfie</b>  here</p></span>
-        </div>
-    </form>
+<div class="text">
+    <div class="disp"><h1 class="click">Click</h1></div>
+    <div class="disp"><h1 class="tap">Tap</h1></div>
+    <div class="disp"><h1 class="to">to upload</h1></div>
+    <div class="disp"><h1 class="cert">Selfie</h1></div>
+    <div class="disp"><h1 class="load">File Uploading</h1></div>
 </div>
+<section class="bg1">
+        <form name="pic_form" action="" method="POST" enctype="multipart/form-data">
+            <input type="file" name="pic" id="pic" accept="image/*" style="display:none">
+        </form>
+</section>
 
-<script type="text/javascript" src="{{ url_for('static', filename = 'js/script_pic.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename = 'js/script_cert.js') }}"></script>
 </body>
 </html>
